@@ -3,251 +3,239 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AluSmart Pro - Fabrication System</title>
+    <title>AluSmart Pro System</title>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #2c3e50; --accent: #e74c3c; --bg: #edf2f7; }
-        body { font-family: 'Sarabun', sans-serif; background-color: var(--bg); margin: 0; padding: 20px; color: #333; }
+        :root { --sidebar-bg: #1a252f; --sidebar-text: #ecf0f1; --primary: #3498db; --bg: #f4f7f6; }
+        body { font-family: 'Sarabun', sans-serif; margin: 0; display: flex; height: 100vh; background-color: var(--bg); overflow: hidden; }
+
+        /* --- SIDEBAR (เมนูซ้าย) --- */
+        .sidebar { width: 240px; background-color: var(--sidebar-bg); color: var(--sidebar-text); display: flex; flex-direction: column; padding: 20px 0; box-shadow: 2px 0 5px rgba(0,0,0,0.1); }
+        .brand { font-size: 20px; font-weight: bold; text-align: center; margin-bottom: 40px; letter-spacing: 1px; }
+        .menu-item { padding: 15px 25px; cursor: pointer; transition: 0.3s; border-left: 4px solid transparent; display: flex; align-items: center; gap: 10px; }
+        .menu-item:hover { background-color: #2c3e50; }
+        .menu-item.active { background-color: #2c3e50; border-left-color: var(--primary); color: var(--primary); font-weight: bold; }
         
-        .container { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 300px 1fr; gap: 20px; }
+        /* --- MAIN CONTENT (ส่วนเนื้อหา) --- */
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; position: relative; }
         
-        /* --- Left Panel: Input Form --- */
-        .control-panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); height: fit-content; }
-        .control-panel h2 { margin-top: 0; font-size: 18px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        
+        /* Page Management (ซ่อนหน้าทั้งหมดก่อน แล้วเปิดเฉพาะตัวที่มี class active) */
+        .page-section { display: none; animation: fadeIn 0.3s; }
+        .page-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- STYLES FOR DASHBOARD --- */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .stat-num { font-size: 28px; font-weight: bold; color: var(--primary); }
+        .project-table { width: 100%; background: white; border-radius: 8px; overflow: hidden; border-collapse: collapse; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .project-table th, .project-table td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; background: #eee; }
+        .status-new { background: #e1f5fe; color: #0288d1; }
+
+        /* --- STYLES FOR EDITOR & REPORTS (จากโค้ดเดิม) --- */
+        .editor-layout { display: grid; grid-template-columns: 300px 1fr; gap: 20px; }
+        .control-panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .paper-preview { background: white; padding: 40px; min-height: 600px; box-shadow: 0 0 15px rgba(0,0,0,0.1); }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; font-size: 13px; color: #666; margin-bottom: 5px; }
-        .form-group input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 16px; }
+        .form-group input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        .btn-primary { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer; }
         
-        .btn-calc { width: 100%; padding: 12px; background-color: var(--primary); color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; transition: 0.3s; }
-        .btn-calc:hover { background-color: #34495e; }
-
-        /* --- Right Panel: Paper Preview --- */
-        .paper { background: white; padding: 40px; border-radius: 4px; box-shadow: 0 0 15px rgba(0,0,0,0.1); min-height: 800px; }
-        
-        /* Header Section (เหมือนรูปที่ 4) */
-        .doc-header { display: flex; justify-content: space-between; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 20px; }
-        .project-info div { margin-bottom: 5px; font-size: 14px; }
-
-        /* Drawing Section */
-        .drawing-area { text-align: center; margin: 30px 0; position: relative; border: 1px dashed #ccc; padding: 20px; }
-        .drawing-img { max-width: 200px; opacity: 0.8; }
-        .dim-label { position: absolute; background: white; padding: 2px 5px; font-size: 12px; font-weight: bold; border: 1px solid #ccc; }
-        
-        /* Table Section (เหมือนรูปที่ 1 และ 4) */
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
-        th { background-color: #f8f9fa; border-bottom: 2px solid #ddd; padding: 10px; text-align: left; font-weight: 600; }
-        td { border-bottom: 1px solid #eee; padding: 10px; vertical-align: middle; }
-        
-        .col-img { width: 60px; text-align: center; }
-        .profile-icon { width: 40px; height: 40px; object-fit: contain; border: 1px solid #eee; padding: 2px; }
-        
-        .cut-spec { font-size: 16px; font-weight: bold; color: var(--primary); }
-        .cut-angle { font-size: 11px; color: #888; background: #f0f0f0; padding: 2px 6px; border-radius: 4px; margin-left: 5px; }
-
-        /* Footer Summary */
-        .summary-box { margin-top: 30px; background: #2c3e50; color: white; padding: 15px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
-        .sum-item { text-align: center; }
-        .sum-val { font-size: 20px; font-weight: bold; color: #f1c40f; }
-
-        /* Print Styles */
-        @media print {
-            body { background: white; padding: 0; }
-            .container { display: block; }
-            .control-panel { display: none; } /* ซ่อนปุ่มกดตอนปริ้น */
-            .paper { box-shadow: none; padding: 0; }
-        }
+        /* Table Styles */
+        table.report-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px; }
+        table.report-table th { background: #f8f9fa; padding: 10px; text-align: left; border-bottom: 2px solid #ddd; }
+        table.report-table td { padding: 10px; border-bottom: 1px solid #eee; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="control-panel">
-        <h2>⚙️ กำหนดขนาด (Input)</h2>
-        
-        <div class="form-group">
-            <label>รูปแบบงาน (Model)</label>
-            <select id="modelSelect" style="width:100%; padding:8px;">
-                <option value="sliding2">บานเลื่อนสลับ (Sliding 2)</option>
-                <option value="awning">บานกระทุ้ง (Awning)</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label>ความกว้างรวม (W) - มม.</label>
-            <input type="number" id="inputW" value="1500">
-        </div>
-        <div class="form-group">
-            <label>ความสูงรวม (H) - มม.</label>
-            <input type="number" id="inputH" value="1200">
-        </div>
-        <div class="form-group">
-            <label>ช่องแสงบน (H1) - มม.</label>
-            <input type="number" id="inputH1" value="400">
-        </div>
-        
-        <button class="btn-calc" onclick="calculatePro()">คำนวณและออกใบสั่งผลิต</button>
-        <p style="font-size:12px; color:#888; margin-top:10px;">*กดปุ่มเพื่ออัปเดตเอกสารด้านขวา</p>
+    <div class="sidebar">
+        <div class="brand">ALU SMART PRO</div>
+        <div class="menu-item active" onclick="navTo('dashboard')">📊 แดชบอร์ด (Home)</div>
+        <div class="menu-item" onclick="navTo('editor')">✏️ ออกแบบ/คำนวณ</div>
+        <div class="menu-item" onclick="navTo('reports')">📄 รายงาน (Reports)</div>
+        <div class="menu-item" onclick="alert('ฟีเจอร์นี้ยังไม่เปิดใน Demo')">⚙️ ตั้งค่าระบบ</div>
     </div>
 
-    <div class="paper">
+    <div class="main-content">
         
-        <div class="doc-header">
-            <div class="project-info">
-                <strong>ใบสั่งผลิต / Fabrication Order</strong><br>
-                โครงการ: บ้านคุณลูกค้า A<br>
-                วันที่: <span id="currentDate"></span>
-            </div>
-            <div style="text-align: right;">
-                <h2>JOB: #67-088</h2>
-                Ref: STD-CS-01
-            </div>
-        </div>
-
-        <div class="drawing-area">
-            <svg width="200" height="250" style="border:2px solid #333; background:#eef;">
-                <rect x="5" y="5" width="190" height="240" stroke="black" fill="none" stroke-width="2"/>
-                <line x1="5" y1="80" x2="195" y2="80" stroke="black" stroke-width="2"/>
-                <text x="100" y="40" font-size="12" text-anchor="middle" fill="#555">ช่องแสง H1</text>
-                <text x="100" y="160" font-size="12" text-anchor="middle" fill="#555">บานเลื่อน/กระทุ้ง H2</text>
-            </svg>
+        <div id="dashboard" class="page-section active">
+            <h2>ภาพรวมโครงการ (Dashboard)</h2>
             
-            <div class="dim-label" style="top: -10px; left: 45%;">W: <span id="showW">1500</span></div>
-            <div class="dim-label" style="top: 50%; left: -25px;">H: <span id="showH">1200</span></div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div>โครงการทั้งหมด</div>
+                    <div class="stat-num">12</div>
+                </div>
+                <div class="stat-card">
+                    <div>รอผลิต</div>
+                    <div class="stat-num" style="color:orange">3</div>
+                </div>
+                <div class="stat-card">
+                    <div>ยอดขายเดือนนี้</div>
+                    <div class="stat-num" style="color:green">฿145,000</div>
+                </div>
+            </div>
+
+            <h3>รายการล่าสุด</h3>
+            <table class="project-table">
+                <thead>
+                    <tr><th>Job ID</th><th>ชื่อลูกค้า</th><th>วันที่</th><th>สถานะ</th><th>จัดการ</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>#67-088</td>
+                        <td>คุณสมชาย (บ้านพัก)</td>
+                        <td>22/11/2025</td>
+                        <td><span class="status-badge status-new">กำลังออกแบบ</span></td>
+                        <td><button onclick="navTo('editor')">แก้ไข</button></td>
+                    </tr>
+                    <tr>
+                        <td>#67-087</td>
+                        <td>ร้านกาแฟ Cafe Amazon</td>
+                        <td>20/11/2025</td>
+                        <td><span class="status-badge" style="background:#fff3cd; color:#856404">รอผลิต</span></td>
+                        <td><button onclick="navTo('reports')">ดูแบบ</button></td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th class="col-img">หน้าตัด</th>
-                    <th>รหัส/ชื่อวัสดุ</th>
-                    <th>สูตรคำนวณ</th>
-                    <th>ขนาดตัด (มม.)</th>
-                    <th>มุมตัด</th>
-                    <th>จำนวน</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-                </tbody>
-        </table>
+        <div id="editor" class="page-section">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2>✏️ ออกแบบงาน: #67-088 (คุณสมชาย)</h2>
+                <button onclick="calculateAndGoReport()" style="padding:10px 20px; background:green; color:white; border:none; border-radius:4px; cursor:pointer;">💾 บันทึกและดูรายงาน ></button>
+            </div>
 
-        <div class="summary-box">
-            <div class="sum-item">
-                <span>จำนวนเส้นรวม</span><br>
-                <span class="sum-val" id="totalBars">0</span> เส้น
+            <div class="editor-layout">
+                <div class="control-panel">
+                    <h3>กำหนดขนาด (Input)</h3>
+                    <div class="form-group">
+                        <label>รูปแบบ</label>
+                        <select style="width:100%; padding:8px;">
+                            <option>บานเลื่อนสลับ 2 บาน + ช่องแสงบน</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>ความกว้าง (W) - มม.</label><input type="number" id="inputW" value="1500"></div>
+                    <div class="form-group"><label>ความสูงรวม (H) - มม.</label><input type="number" id="inputH" value="1200"></div>
+                    <div class="form-group"><label>ช่องแสงบน (H1) - มม.</label><input type="number" id="inputH1" value="400"></div>
+                    <button class="btn-primary" onclick="previewDrawing()">🔄 รีเฟรชภาพตัวอย่าง</button>
+                </div>
+
+                <div class="paper-preview" style="display:flex; align-items:center; justify-content:center; flex-direction:column;">
+                    <h3>ภาพจำลอง (Preview)</h3>
+                    <svg width="300" height="350" style="border:1px dashed #ccc; background:#fdfdfd;">
+                        <rect x="50" y="20" width="200" height="300" stroke="#333" fill="none" stroke-width="2"/>
+                        <line x1="50" y1="100" x2="250" y2="100" stroke="#333" stroke-width="2"/> <text x="150" y="60" font-size="12" text-anchor="middle" fill="#888">ช่องแสง (H1)</text>
+                        <text x="150" y="200" font-size="12" text-anchor="middle" fill="#888">บานเลื่อน (H2)</text>
+                        <text x="150" y="340" font-size="14" font-weight="bold" text-anchor="middle" fill="blue">W: <tspan id="dispW">1500</tspan></text>
+                        <text x="20" y="170" font-size="14" font-weight="bold" text-anchor="middle" fill="blue" transform="rotate(-90, 20, 170)">H: <tspan id="dispH">1200</tspan></text>
+                    </svg>
+                    <p style="color:#666; font-size:12px; margin-top:10px;">*นี่คือภาพจำลองเบื้องต้น ขนาดจริงดูในหน้าถัดไป</p>
+                </div>
             </div>
-            <div class="sum-item">
-                <span>น้ำหนักรวม (Estimate)</span><br>
-                <span class="sum-val" id="totalWeight">0.0</span> กก.
+        </div>
+
+        <div id="reports" class="page-section">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2>📄 ใบสั่งผลิต (Fabrication Order)</h2>
+                <div>
+                    <button onclick="navTo('editor')" style="padding:8px 15px; background:#eee; border:none; cursor:pointer;">&lt; กลับไปแก้ไข</button>
+                    <button onclick="window.print()" style="padding:8px 15px; background:#34495e; color:white; border:none; cursor:pointer;">🖨️ พิมพ์เอกสาร</button>
+                </div>
             </div>
-            <div class="sum-item">
-                <span>ต้นทุนวัสดุ</span><br>
-                <span class="sum-val" id="totalCost">0</span> บาท
+
+            <div class="paper-preview" style="min-height:800px;">
+                <div style="border-bottom:2px solid black; padding-bottom:20px; margin-bottom:20px;">
+                    <h1 style="margin:0; font-size:24px;">ใบสั่งตัดอลูมิเนียม / Cutting List</h1>
+                    <p>Job: #67-088 | ลูกค้า: คุณสมชาย</p>
+                </div>
+
+                <table class="report-table">
+                    <thead>
+                        <tr><th>รายการ</th><th>สูตร</th><th>ขนาดตัด (มม.)</th><th>มุมตัด</th><th>จำนวน</th></tr>
+                    </thead>
+                    <tbody id="reportTableBody">
+                        </tbody>
+                </table>
+
+                <div style="margin-top:30px; padding:15px; background:#eee; text-align:right;">
+                    <h3>ต้นทุนวัสดุรวมโดยประมาณ: <span id="totalCostDisplay" style="color:red">0</span> บาท</h3>
+                </div>
             </div>
         </div>
 
     </div>
-</div>
 
 <script>
-    // --- 1. DATABASE จำลอง (เพิ่มรูปภาพและมุมตัด) ---
-    // สังเกต: ผมเพิ่ม field 'img' และ 'angle' เข้ามา
-    const materialsDB = {
-        'frame_outer': { name: "กล่องเรียบ 1.2 (Outer Frame)", code: "M03013C", price: 150, weight: 0.5, img: "https://cdn-icons-png.flaticon.com/512/32/32339.png" }, // รูปสี่เหลี่ยม
-        'frame_inner': { name: "กรอบบานเปิด (Sash)", code: "M30348AT", price: 180, weight: 0.6, img: "https://cdn-icons-png.flaticon.com/512/25/25635.png" }, // รูปตัว L
-        'beading': { name: "คิ้วกระจก (Beading)", code: "M1020", price: 50, weight: 0.2, img: "https://cdn-icons-png.flaticon.com/512/748/748157.png" },
-        'glass': { name: "กระจกเขียวใส 6มม.", code: "GL-GR6", price: 500, weight: 0, img: "https://cdn-icons-png.flaticon.com/512/2393/2393468.png" }
-    };
+    // --- 1. NAVIGATION LOGIC (ระบบเปลี่ยนหน้า) ---
+    function navTo(pageId) {
+        // ซ่อนทุกหน้า
+        document.querySelectorAll('.page-section').forEach(page => {
+            page.classList.remove('active');
+        });
+        // ปิดไฮไลท์เมนูทั้งหมด
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.classList.remove('active');
+        });
 
-    // สูตรการผลิต (Config สูตร)
-    const productFormulas = [
-        // ส่วนช่องแสง (Fix)
-        { part: "frame_outer", desc: "เฟรมข้าง (H)", formula: "H", angle: "90°", qty: 2 },
-        { part: "frame_outer", desc: "เฟรมบน-ล่าง (W)", formula: "W", angle: "90°", qty: 2 },
-        { part: "frame_outer", desc: "เสาแบ่งช่องแสง (Mullion)", formula: "W-50", angle: "90°", qty: 1 }, // หักเฟรม 50mm
+        // แสดงหน้าเป้าหมาย
+        document.getElementById(pageId).classList.add('active');
         
-        // ส่วนบานกระทุ้ง
-        { part: "frame_inner", desc: "กรอบบานตั้ง", formula: "H-H1-50", angle: "45°", qty: 2 },
-        { part: "frame_inner", desc: "กรอบบานนอน", formula: "W-50", angle: "45°", qty: 2 },
-        
-        // กระจก
-        { part: "glass", desc: "กระจกช่องแสง", formula: "Area: (W-20)x(H1-20)", angle: "-", qty: 1 },
-        { part: "glass", desc: "กระจกบานเปิด", formula: "Area: (W-80)x(H-H1-80)", angle: "-", qty: 1 }
-    ];
+        // ไฮไลท์เมนู (แบบ Manual ง่ายๆ)
+        const menuIndex = {'dashboard':0, 'editor':1, 'reports':2};
+        document.querySelectorAll('.menu-item')[menuIndex[pageId]].classList.add('active');
+    }
 
-    // --- 2. LOGIC การคำนวณ ---
-    function calculatePro() {
-        // รับค่าจาก Input
-        const W = parseFloat(document.getElementById('inputW').value) || 0;
-        const H = parseFloat(document.getElementById('inputH').value) || 0;
-        const H1 = parseFloat(document.getElementById('inputH1').value) || 0;
+    // --- 2. CALCULATION LOGIC (ระบบคำนวณ) ---
+    function previewDrawing() {
+        // รับค่ามาแสดงในรูปภาพ Preview
+        const w = document.getElementById('inputW').value;
+        const h = document.getElementById('inputH').value;
+        document.getElementById('dispW').innerText = w;
+        document.getElementById('dispH').innerText = h;
+    }
 
-        // อัปเดตหน้าจอ Drawing
-        document.getElementById('showW').innerText = W;
-        document.getElementById('showH').innerText = H;
-        document.getElementById('currentDate').innerText = new Date().toLocaleDateString('th-TH');
+    function calculateAndGoReport() {
+        // 1. รับค่า Input
+        const W = parseFloat(document.getElementById('inputW').value);
+        const H = parseFloat(document.getElementById('inputH').value);
+        const H1 = parseFloat(document.getElementById('inputH1').value);
 
+        // 2. สูตรคำนวณ (Mockup Logic)
+        const cutList = [
+            { name: "กล่องเรียบ 1.2 (เฟรมข้าง)", formula: "H", size: H, angle: "90°", qty: 2 },
+            { name: "กล่องเรียบ 1.2 (เฟรมบน/ล่าง)", formula: "W", size: W, angle: "90°", qty: 2 },
+            { name: "เสาแบ่งช่องแสง", formula: "W-50", size: W-50, angle: "90°", qty: 1 },
+            { name: "กรอบบานกระทุ้ง (ตั้ง)", formula: "H-H1-50", size: H-H1-50, angle: "45°", qty: 2 },
+            { name: "กรอบบานกระทุ้ง (นอน)", formula: "W-50", size: W-50, angle: "45°", qty: 2 },
+        ];
+
+        // 3. สร้าง HTML ตาราง
         let html = "";
-        let totalWeight = 0;
         let totalCost = 0;
-        let totalBars = 0;
-
-        // วนลูปคำนวณ
-        productFormulas.forEach(item => {
-            const mat = materialsDB[item.part];
-            
-            // Parser สูตร (แทนค่า W, H, H1)
-            let formulaStr = item.formula.replace(/W/g, W).replace(/H1/g, H1).replace(/H/g, H);
-            
-            let cutSize = 0;
-            let displaySize = "";
-
-            if (item.part === 'glass') {
-                // กรณีเป็นกระจก (คำนวณพื้นที่โชว์เฉยๆ ใน Demo นี้)
-                displaySize = formulaStr; // แสดงสูตรแทน
-            } else {
-                // กรณีเป็นอลูมิเนียม (คำนวณเลขออกมา)
-                try {
-                    cutSize = eval(formulaStr);
-                } catch (e) { cutSize = 0; }
-                displaySize = `<span class="cut-spec">${cutSize.toFixed(1)}</span>`;
-                
-                // คำนวณของสรุป (Summary)
-                let lengthMeters = (cutSize / 1000) * item.qty;
-                totalWeight += lengthMeters * mat.weight;
-                totalCost += lengthMeters * mat.price;
-                // สมมติอลูมิเนียม 1 เส้นยาว 6 เมตร (คำนวณจำนวนเส้นคร่าวๆ)
-                totalBars += (lengthMeters / 6); 
-            }
-
-            // Render แถวตาราง (HTML)
+        cutList.forEach(item => {
+            let cost = (item.size / 1000) * 150 * item.qty; // สมมติเมตรละ 150 บาท
+            totalCost += cost;
             html += `
-            <tr>
-                <td class="col-img"><img src="${mat.img}" class="profile-icon"></td>
-                <td>
-                    <strong>${mat.code}</strong><br>
-                    <span style="color:#666">${mat.name}</span>
-                    <div style="font-size:11px; color:#888; margin-top:2px;">(${item.desc})</div>
-                </td>
-                <td style="color:#888; font-family:monospace;">${item.formula}</td>
-                <td>${displaySize}</td>
-                <td><span class="cut-angle">${item.angle}</span></td>
-                <td style="font-weight:bold; font-size:16px;">${item.qty}</td>
-            </tr>
+                <tr>
+                    <td>${item.name}</td>
+                    <td style="color:#888">${item.formula}</td>
+                    <td style="font-weight:bold; font-size:16px;">${item.size.toFixed(1)}</td>
+                    <td><span style="background:#eee; padding:2px 5px; border-radius:3px;">${item.angle}</span></td>
+                    <td>${item.qty}</td>
+                </tr>
             `;
         });
 
-        document.getElementById('tableBody').innerHTML = html;
-        
-        // Update Footer Summary
-        document.getElementById('totalBars').innerText = Math.ceil(totalBars); // ปัดเศษขึ้น
-        document.getElementById('totalWeight').innerText = totalWeight.toFixed(2);
-        document.getElementById('totalCost').innerText = Math.round(totalCost).toLocaleString();
+        // 4. ใส่ข้อมูลลงในหน้า Reports
+        document.getElementById('reportTableBody').innerHTML = html;
+        document.getElementById('totalCostDisplay').innerText = Math.round(totalCost).toLocaleString();
+
+        // 5. สั่งเปลี่ยนหน้า
+        navTo('reports');
     }
-
-    // รันครั้งแรกตอนเปิดหน้าเว็บ
-    window.onload = calculatePro;
-
 </script>
 
 </body>
